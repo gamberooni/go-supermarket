@@ -3,9 +3,11 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/gamberooni/go-supermarket/model"
+	"github.com/gamberooni/go-supermarket/util"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 )
@@ -38,7 +40,19 @@ func (h *Handler) Signup(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	// validate
+	// manually validate birthday regex
+	birthdayRe, _ := regexp.Compile("[0-9]{4}-[0-9]{2}-[0-9]{2}")
+	if !birthdayRe.MatchString(customer.Birthday) {
+		return echo.NewHTTPError(http.StatusInternalServerError, "birthday does not match regexp pattern 'yyyy-MM-dd'")
+	}
+
+	// manually validate phone number regex
+	phoneNumberRe, _ := regexp.Compile("01[0-9]{1}-[0-9]{7,8}")
+	if !phoneNumberRe.MatchString(customer.PhoneNumber) {
+		return echo.NewHTTPError(http.StatusInternalServerError, "phone number does not match regexp pattern '01x-xxxxxxx(x)'")
+	}
+
+	// validate using validator package
 	validateError := h.Validator.Struct(customer)
 	if validateError != nil {
 		// this check is only needed when your code could produce
@@ -71,7 +85,13 @@ func (h *Handler) Signup(c echo.Context) error {
 
 	}
 
-	// continue if validation has no error
+	// hash the customer's signup password
+	hashedPassword, hashError := util.HashPassword(customer.Password)
+	if hashError != nil {
+		return c.JSON(http.StatusInternalServerError, hashError)
+	}
+	customer.Password = hashedPassword
+
 	createError := h.CustomerStore.Signup(&customer)
 	if createError != nil {
 		return c.JSON(http.StatusInternalServerError, createError)

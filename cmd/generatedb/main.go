@@ -13,8 +13,10 @@ func main() {
 	// initialize db
 	db := util.InitDB()
 
+	hashedPassword, _ := util.HashPassword("p4ssw0rd")
+
 	customers := []model.Customer{
-		{Name: "Tom", Email: "tom@jerry.com", Birthday: "1996-03-14", PhoneNumber: "012-3456789", Password: "password"},
+		{Name: "Tom", Email: "tom@jerry.com", Birthday: "1996-03-14", PhoneNumber: "012-3456789", Password: string(hashedPassword)},
 		{Name: "Jerry", Email: "jerry@tom.com", Birthday: "1999-01-30", PhoneNumber: "012-9876543"},
 		{Name: "Donald", Email: "donald@duck.com", Birthday: "1976-06-12"},
 		{Name: "Mickey", PhoneNumber: "019-8765432", Birthday: "1987-07-17"},
@@ -49,7 +51,7 @@ func main() {
 		},
 		{
 			Timestamp:     time.Date(2021, 10, 13, 12, 55, 21, 551926242, time.UTC),
-			PaymentMethod: "Cash",
+			PaymentMethod: "MasterCard",
 			CustomerID:    1,
 			Purchases: []model.Purchase{
 				{

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gamberooni/go-supermarket/model"
+	"github.com/gamberooni/go-supermarket/util"
 	"github.com/golang-jwt/jwt"
 	"gorm.io/gorm"
 )
@@ -78,8 +79,16 @@ func createJwtToken(c *model.Customer) (string, error) {
 }
 
 func (cs *CustomerStore) Login(c *model.Customer) (*http.Cookie, error) {
-	result := cs.db.Where("email = ? AND password = ?", c.Email, c.Password).Find(&c)
+	plainPassword := c.Password
+
+	// retrieve customer from db based on the email
+	result := cs.db.Where("email = ?", c.Email).Find(&c)
 	if result.RowsAffected == 0 {
+		return nil, errors.New("record not found")
+	}
+
+	// compare hashed and plain passwords
+	if !util.ComparePasswords(c.Password, []byte(plainPassword)) {
 		return nil, errors.New("invalid credentials")
 	}
 
@@ -96,8 +105,6 @@ func (cs *CustomerStore) Login(c *model.Customer) (*http.Cookie, error) {
 	jwtCookie.Expires = time.Now().Add(48 * time.Hour)
 	// Http-only helps mitigate the risk of client side script accessing the protected cookie
 	jwtCookie.HttpOnly = true
-
-	c.JWTToken = token
 
 	return jwtCookie, nil
 }

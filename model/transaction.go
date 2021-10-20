@@ -7,23 +7,24 @@ import (
 )
 
 type Transaction struct {
+	gorm.Model
 	ID            int
-	Timestamp     time.Time
-	PaymentMethod string
-	Amount        float64
+	Timestamp     time.Time `json:"timestamp"`
+	PaymentMethod string    `json:"payment_method" validate:"required,containsany=Cash,VISA,MasterCard"`
+	Amount        float64   // calculated by calling PUT request on /api/transactions/:id/amount
 	// CompanyID is implicitly used to create a FK relationship between Transaction and Customer tables
 	// Customer struct needs to be included
-	CustomerID int
+	CustomerID int `json:"customer_id" validate:"required"`
 	Customer   Customer
-	Purchases  []Purchase
+	Purchases  []Purchase `json:"purchases"`
 }
 
 type Purchase struct {
 	gorm.Model
-	Quantity      int `json:"quantity"`
-	PricePerUnit  float64
-	TransactionID int
-	ProductID     int `json:"product_id"`
+	Quantity      int     `json:"quantity" validate:"required"`
+	PricePerUnit  float64 // automatically calculated using gorm hook
+	TransactionID int     // automatically referenced back to parent table
+	ProductID     int     `json:"product_id" validate:"required"`
 	Product       Product
 }
 

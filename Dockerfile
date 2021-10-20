@@ -5,7 +5,9 @@ WORKDIR /app
 # download go modules
 COPY go.mod .
 COPY go.sum /
-RUN go mod download
+RUN apk add --no-cache --virtual .build-deps gcc musl-dev \
+    && go mod download \
+    && apk del .build-deps
 
 # copy everything in the current Docker context into the /app directory in the container
 COPY . .

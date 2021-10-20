@@ -5,13 +5,15 @@ WORKDIR /app
 # download go modules
 COPY go.mod .
 COPY go.sum /
-RUN go mod download
+RUN go mod download  
 
 # copy everything in the current Docker context into the /app directory in the container
 COPY . .
 
 # build go bin for the application
-RUN go build -o ./bin/go-supermarket
+RUN apk add --no-cache --virtual .build-deps gcc musl-dev \
+    && go build -o ./bin/go-supermarket \
+    && apk del .build-deps
 
 EXPOSE 1323
 
